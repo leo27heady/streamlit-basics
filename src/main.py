@@ -3,8 +3,10 @@ import streamlit as st
 import pandas as pd
 
 # import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import seaborn as sns
+
+df = None
 
 
 def load_data(data_path):
@@ -12,6 +14,7 @@ def load_data(data_path):
 
 
 def title_write():
+
     st.title("Heart Disease")
     st.write(
         """
@@ -43,8 +46,90 @@ def title_write():
     """
     )
 
+    change_parameter()
 
-def explore_write(df):
+
+def change_parameter():
+    global df
+
+    st.write(
+        """
+    ## Сustomizing features
+    """
+    )
+
+    # Age range slider
+    age_range = st.slider(
+        "Age range",
+        int(df["age"].min()),
+        int(df["age"].max()),
+        (int(df["age"].min()), int(df["age"].max())),
+    )
+    df = df.query(f"age in {list(range(age_range[0], age_range[1]))}")
+
+    # Sex checkbox
+    st.write("Sex")
+    male = st.checkbox("Male")
+    female = st.checkbox("Female")
+
+    # for i in [male, female]:
+    #      for j in [male, female]:
+    # options = st.multiselect(
+    #   'What are your favorite colors',
+    #   ['Green', 'Yellow', 'Red', 'Blue'],
+    #   ['Yellow', 'Red'])
+    # st.write('You selected:', options)
+    # print(options)
+    # st.write('You selected:', list(options.keys()))
+
+    if male & female:
+        df = df.query(f"sex in {[0, 1]}")
+    elif male == 1:
+        df = df.query(f"sex in {[1]}")
+    elif female == 1:
+        df = df.query(f"sex in {[0]}")
+    else:
+        df = df.query(f"sex in {[]}")
+
+    # Resting blood pressure range slider
+    trestbps_range = st.slider(
+        "Resting blood pressure range",
+        int(df["trestbps"].min()),
+        int(df["trestbps"].max()),
+        (int(df["trestbps"].min()), int(df["trestbps"].max())),
+    )
+    df = df.query(
+        f"trestbps in {list(range(trestbps_range[0], trestbps_range[1]))}"
+    )
+
+    # `trestbps`: The person's resting blood pressure
+    # CP checkbox
+    # st.write('Chest pain')
+    # no_pain = st.checkbox('No chest pain')
+    # typical = st.checkbox('Typical angina')
+    # atypical = st.checkbox('Atypical angina')
+    # non_anginal = st.checkbox('Non-anginal pain')
+    # asymptomatic = st.checkbox('Asymptomatic')
+
+    # if no_pain & typical & atypical & non_anginal & asymptomatic:
+    #     df = df.query(f"cp in {[0, 1, 2, 3, 4]}")
+    # elif no_pain == 1:
+    #     df = df.query(f"cp in {[0]}")
+    # elif typical == 1:
+    #     df = df.query(f"cp in {[1]}")
+    # elif atypical == 1:
+    #     df = df.query(f"cp in {[2]}")
+    # elif non_anginal == 1:
+    #     df = df.query(f"cp in {[3]}")
+    # elif asymptomatic == 1:
+    #     df = df.query(f"cp in {[4]}")
+    # else:
+    #     df = df.query(f"cp in {[]}")
+
+
+def explore_write():
+    global df
+
     st.write(
         """
     # Explore dataset
@@ -72,7 +157,22 @@ def explore_write(df):
     * `max`: maximum feature value
     """
     )
+
     st.dataframe(df.describe())
+
+    st.write(
+        """
+    ## Dataset Heatmap
+    Heatmap is a graphical representation of data where the individual
+    values contained in a matrix are represented as colors.
+    It is a bit like looking a data table from above.
+    It is really useful to display a general view of numerical data,
+    not to extract specific data point.
+    """
+    )
+    plt.figure(figsize=(10, 10))
+    sns.heatmap(df.corr(), annot=True, fmt=".1f")
+    st.pyplot(plt)
 
     st.write(
         """
@@ -89,7 +189,9 @@ def explore_write(df):
     )
 
 
-def analysis_write(df):
+def analysis_write():
+    global df
+
     st.write(
         """
         # Dataset analysis
@@ -145,18 +247,22 @@ def sex_analysis_write(df):
     that those people who have heart disease do not live long
     """
     )
+    # plt.figure(figsize=(10, 8))
     figure = sns.catplot(
         data=df,
-        kind="bar",
+        kind="box",
         x="target",
         y="age",
         hue="sex",
-        ci="sd",
-        palette="dark",
-        alpha=0.6,
-        height=6,
+        # ci="sd",
+        # palette="dark",
+        # alpha=0.6,
+        # height=6,
     )
-    figure.despine(left=True)
+
+    # figure = sns.barplot(x="target", y="age", hue="sex", data=df)
+
+    # figure.despine(left=True)
     # figure.set_axis_labels("Sex", "Age")
 
     # figure = sns.displot(
@@ -182,21 +288,27 @@ def cp_analysis_write(df):
     )
     figure = sns.catplot(
         data=df,
-        kind="bar",
+        kind="box",
         x="target",
         y="age",
         hue="cp",
-        ci="sd",
-        palette="dark",
-        alpha=0.6,
-        height=6,
+        # ci="sd",
+        # palette="dark",
+        # alpha=0.6,
+        # height=6,
     )
-    figure.despine(left=True)
+    # figure.despine(left=True)
     st.pyplot(figure)
 
 
-if __name__ == "__main__":
+def df_init():
+    global df
+
     df = load_data(data_path="./resources/heart.csv")
+
+
+if __name__ == "__main__":
+    df_init()
     title_write()
-    explore_write(df)
-    analysis_write(df)
+    explore_write()
+    analysis_write()
